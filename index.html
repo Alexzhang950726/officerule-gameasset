@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>办公室规则怪谈</title>
+    <!-- 使用 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #0a0a0a;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+        .fade-in { animation: fadeIn 1s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .zoom-in { animation: zoomIn 0.5s ease-out forwards; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        video::-webkit-media-controls-fullscreen-button { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- 背景音频 -->
+    <audio id="bgmAudio" loop></audio>
+
+    <div id="app" class="w-full flex flex-col items-center">
+        <!-- 动态内容将注入此处 -->
+    </div>
+
+    <script>
+        // ==========================================
+        // 游戏配置与数据
+        // ==========================================
+        const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/Alexzhang950726/officerule-gameasset/main/";
+        
+        const VIDEO_PATHS = {
+            intro: GITHUB_RAW_BASE + "openclawvedio.mp4",
+            end1: GITHUB_RAW_BASE + "death1.mp4",
+            end2: GITHUB_RAW_BASE + "death2.mp4",
+            end3: GITHUB_RAW_BASE + "death3.mp4",
+            end4: GITHUB_RAW_BASE + "death4.mp4",
+            end5: GITHUB_RAW_BASE + "death5.mp4",
+            win:  GITHUB_RAW_BASE + "re.mp4",
+        };
+
+        const AUDIO_PATHS = {
+            bgm: GITHUB_RAW_BASE + "The%20Silent%20Bell.mp3",
+        };
+
+        const GAME_DATA = {
+            rules: [
+                "1.电梯只能在整点进入，电梯内绝对安全，其他时间进入电梯会招来厄运",
+                "2.加班时必须要保持清醒冷静",
+                "3.有人加班时，公司的茶水间是开放的，里面有速溶咖啡和罐装可乐",
+                "4.不要损坏公司的任何物品",
+                "5.晚上公司里只有你一个人，你所在的办公室在三楼",
+                "6.服从经理的指示，但是进入经理办公室之前必须敲门",
+                "7.晚上8:30到9:30是危险时间，不要离开工位",
+                "8.你需要尽快离开"
+            ],
+            acts: {
+                1: {
+                    title: "第一幕：晚上七点",
+                    text: "现在是晚上七点，在办公桌前，发现桌上有一张经理留下的纸条:\"到会议室取文件。\"，你会：",
+                    options: [
+                        { id: 'A', text: "直接去会议室", next: 2, isCorrect: true, reason: "你去二号会议室拿回文件，继续返回办公室工作。" },
+                        { id: 'B', text: "无视这个纸条", isCorrect: false, video: VIDEO_PATHS.end1, reason: "你忽略了经理的指示，你面前的纸条突然变大，蒙住你的口鼻，你因为窒息死亡，你的游戏结束了（违反规则6）" }
+                    ]
+                },
+                2: {
+                    title: "第二幕：神秘来电",
+                    text: "没多久，你接到一个电话，电话里是经理的声音，里面传来声音:\"小明，来我办公室一趟，我有点任务要交给你\"。你会:",
+                    options: [
+                        { id: 'A', text: "去经理办公室，进门之前先敲门", isCorrect: false, video: VIDEO_PATHS.end2, reason: "你敲门进入以后，椅子上的经理突然化作一团黑影向你扑过来，你的游戏结束了（违反规则5）" },
+                        { id: 'B', text: "继续埋头工作，不理他", next: 3, isCorrect: true, reason: "你没有理这个电话，继续埋头工作。" }
+                    ]
+                },
+                3: {
+                    title: "第三幕：极度疲惫",
+                    text: "工作了一会，到晚上八点，你非常疲惫，你的眼皮快要打架了，你会:",
+                    options: [
+                        { id: 'A', text: "小憩一会儿提提神", isCorrect: false, video: VIDEO_PATHS.end3, reason: "你小憩一会，在工位上睡着了从此再也没有醒来，你的游戏结束了（违反规则2）" },
+                        { id: 'B', text: "起身走动，让自己保持清醒", next: 4, isCorrect: true, reason: "你起身走动了几分钟，感觉精神好转，然后继续回到办公桌前工作。" },
+                        { id: 'C', text: "继续埋头工作", isCorrect: false, video: VIDEO_PATHS.end3, reason: "你感觉越来越困，在工位上睡着了从此再也没有醒来，你的游戏结束了（违反规则2）" }
+                    ]
+                },
+                4: {
+                    title: "第四幕：困意来袭",
+                    text: "晚上十点的时候，你又开始犯困了，你起身走动了几分钟发现还是很困，你会:",
+                    options: [
+                        { id: 'A', text: "猛掐自己的大腿，用疼痛保持清醒", next: 5, isCorrect: true, reason: "你猛掐自己的大腿，感觉一下子清醒了，你继续工作。" },
+                        { id: 'B', text: "去茶水间冲一杯咖啡提神", isCorrect: false, video: VIDEO_PATHS.end4, reason: "你撕开咖啡的包装，给自己泡了一杯咖啡，喝下去以后，很快失去知觉，你的游戏结束了（违反规则4）" },
+                        { id: 'C', text: "去茶水间拿一罐可乐喝", isCorrect: false, video: VIDEO_PATHS.end4, reason: "你打开可乐罐，喝下去以后，很快失去知觉，你的游戏结束了（违反规则4）" }
+                    ]
+                },
+                5: {
+                    title: "第五幕：逃离公司",
+                    text: "疼痛让你更加清醒，很快完成了工作，你关闭电脑下班，来到电梯间，时间已经是10:55分，你会：",
+                    options: [
+                        { id: 'A', text: "立即乘坐电梯", isCorrect: false, video: VIDEO_PATHS.end5, reason: "你乘坐电梯下楼，在走出电梯的几秒钟后，大堂的吊顶灯落下来砸到你的头上，你的脑袋炸开了花（违反规则1/8）" },
+                        { id: 'B', text: "走楼梯", isCorrect: true, isWin: true, video: VIDEO_PATHS.win, reason: "公司在三楼，你只用了一分钟就从楼梯间飞奔出来，你穿过大堂，离开这栋写字楼。恭喜你，在这家奇奇怪怪的公司，又多活了一天。" },
+                        { id: 'C', text: "等到整点的时候乘坐电梯", isCorrect: false, video: VIDEO_PATHS.end5, reason: "你乘坐电梯下楼，在走出电梯的几秒钟后，大堂的吊顶灯落下来砸到你的头上，你的脑袋炸开了花（违反规则1/8）" }
+                    ]
+                }
+            }
+        };
+
+        // ==========================================
+        // 游戏状态管理
+        // ==========================================
+        let state = {
+            gameState: 'start_screen',
+            countdown: 10,
+            currentAct: 1,
+            videoConfig: { src: '', isWin: false, reason: '' },
+            isMuted: false,
+            videoLoading: false
+        };
+
+        const appContainer = document.getElementById('app');
+        const bgmAudio = document.getElementById('bgmAudio');
+        bgmAudio.src = AUDIO_PATHS.bgm;
+
+        function setState(newState) {
+            state = { ...state, ...newState };
+            render();
+        }
+
+        // ==========================================
+        // 渲染逻辑
+        // ==========================================
+        function render() {
+            appContainer.innerHTML = '';
+            
+            switch (state.gameState) {
+                case 'start_screen':
+                    renderStartScreen();
+                    break;
+                case 'intro_video':
+                case 'video':
+                    renderVideoScreen();
+                    break;
+                case 'rules':
+                    renderRulesScreen();
+                    break;
+                case 'playing':
+                    renderPlayingScreen();
+                    break;
+                case 'end':
+                    renderEndScreen();
+                    break;
+            }
+            lucide.createIcons();
+        }
+
+        function renderStartScreen() {
+            appContainer.innerHTML = `
+                <div class="max-w-md w-full text-center space-y-8 fade-in">
+                    <div class="space-y-4">
+                        <h1 class="text-4xl font-black text-red-700 tracking-[0.2em] drop-shadow-lg">办公室规则怪谈</h1>
+                        <p class="text-neutral-500 italic uppercase tracking-widest text-sm">Office Weird Rules</p>
+                    </div>
+                    <button id="startBtn" class="group relative inline-flex items-center gap-3 px-12 py-4 bg-neutral-900 border border-red-900/50 hover:bg-red-950/20 transition-all rounded-full overflow-hidden">
+                        <i data-lucide="play" class="w-5 h-5 text-red-600 fill-current"></i>
+                        <span class="relative text-xl font-bold tracking-widest text-neutral-100">开始调查</span>
+                    </button>
+                </div>
+            `;
+            document.getElementById('startBtn').onclick = () => {
+                setState({ 
+                    videoConfig: { src: VIDEO_PATHS.intro, isWin: false, reason: "调查开始..." },
+                    videoLoading: true,
+                    gameState: 'intro_video' 
+                });
+            };
+        }
+
+        function renderVideoScreen() {
+            appContainer.innerHTML = `
+                <div class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center">
+                    <div id="loadingOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-black z-10 ${state.videoLoading ? '' : 'hidden'}">
+                        <i data-lucide="loader-2" class="w-12 h-12 text-red-600 animate-spin mb-4"></i>
+                        <p class="text-neutral-500 font-mono">正在加载视频资源...</p>
+                    </div>
+                    <div class="relative w-full max-w-5xl aspect-video bg-neutral-900 rounded-lg overflow-hidden border border-neutral-800 shadow-2xl">
+                        <video id="gameVideo" src="${state.videoConfig.src}" autoPlay playsInline class="w-full h-full object-contain"></video>
+                        <button id="skipVideoBtn" class="absolute bottom-6 right-6 px-6 py-2 bg-black/60 hover:bg-red-900 text-white rounded border border-neutral-700 transition-all z-20">跳过</button>
+                    </div>
+                </div>
+            `;
+            
+            const video = document.getElementById('gameVideo');
+            video.oncanplay = () => document.getElementById('loadingOverlay').classList.add('hidden');
+            video.onended = () => proceedAfterVideo();
+            video.onerror = () => {
+                alert("视频加载失败，请检查链接或网络状态。地址: " + state.videoConfig.src);
+                proceedAfterVideo();
+            };
+            document.getElementById('skipVideoBtn').onclick = () => proceedAfterVideo();
+        }
+
+        function proceedAfterVideo() {
+            if (state.gameState === 'intro_video') {
+                startRulesCountdown();
+            } else {
+                setState({ gameState: 'end' });
+            }
+        }
+
+        function startRulesCountdown() {
+            setState({ gameState: 'rules', countdown: 10 });
+            bgmAudio.muted = state.isMuted;
+            bgmAudio.play().catch(() => console.log("等待交互播放音频"));
+
+            const timer = setInterval(() => {
+                if (state.countdown > 1) {
+                    state.countdown--;
+                    document.getElementById('timerText').innerText = `00:${state.countdown.toString().padStart(2, '0')}`;
+                } else {
+                    clearInterval(timer);
+                    bgmAudio.pause();
+                    setState({ gameState: 'playing' });
+                }
+            }, 1000);
+            state.activeTimer = timer;
+        }
+
+        function renderRulesScreen() {
+            appContainer.innerHTML = `
+                <div class="max-w-3xl w-full bg-neutral-900/50 p-8 rounded-lg border border-red-900/30 shadow-[0_0_40px_rgba(127,29,29,0.2)] fade-in relative">
+                    <button id="muteBtn" class="absolute top-8 right-32 p-2 rounded-full bg-red-950/30 hover:bg-red-900/50 text-red-500 transition-all">
+                        <i data-lucide="${state.isMuted ? 'volume-x' : 'volume-2'}" class="w-5 h-5"></i>
+                    </button>
+                    <div class="flex items-center justify-between mb-8 border-b border-red-900/50 pb-4">
+                        <h1 class="text-3xl font-bold text-red-600 tracking-widest flex items-center gap-3">
+                            <i data-lucide="alert-circle" class="w-8 h-8"></i>办公室守则
+                        </h1>
+                        <div class="flex items-center gap-2 text-xl font-mono text-red-500 bg-red-950/30 px-4 py-2 rounded">
+                            <i data-lucide="clock" class="w-5 h-5 animate-pulse"></i>
+                            <span id="timerText">00:${state.countdown.toString().padStart(2, '0')}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        ${GAME_DATA.rules.map(rule => `<p class="text-lg text-neutral-400 hover:text-neutral-200 transition-colors leading-relaxed">${rule}</p>`).join('')}
+                    </div>
+                    <button id="knowBtn" class="mt-10 w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded transition-all flex items-center justify-center gap-2">
+                        我记住了 <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            document.getElementById('muteBtn').onclick = () => {
+                state.isMuted = !state.isMuted;
+                bgmAudio.muted = state.isMuted;
+                render();
+            };
+            document.getElementById('knowBtn').onclick = () => {
+                if (state.activeTimer) clearInterval(state.activeTimer);
+                bgmAudio.pause();
+                setState({ gameState: 'playing' });
+            };
+        }
+
+        function renderPlayingScreen() {
+            const act = GAME_DATA.acts[state.currentAct];
+            appContainer.innerHTML = `
+                <div class="max-w-2xl w-full zoom-in">
+                    <div class="bg-neutral-900 border border-neutral-800 p-8 rounded-lg shadow-2xl">
+                        <h2 class="text-2xl font-bold text-red-500 mb-6 border-b border-neutral-800 pb-4">${act.title}</h2>
+                        <p class="text-xl text-neutral-200 leading-relaxed mb-10 min-h-[100px]">${act.text}</p>
+                        <div class="space-y-4" id="optionsList">
+                            ${act.options.map(opt => `
+                                <button data-id="${opt.id}" class="option-btn w-full text-left p-4 rounded bg-neutral-950 border border-neutral-800 hover:border-red-900/80 hover:bg-neutral-800/80 transition-all group flex items-start gap-4">
+                                    <span class="text-red-600 font-bold">选项 ${opt.id}.</span>
+                                    <span class="text-lg text-neutral-300 group-hover:text-white">${opt.text}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const optId = btn.getAttribute('data-id');
+                    const option = act.options.find(o => o.id === optId);
+                    handleOptionClick(option);
+                };
+            });
+        }
+
+        function handleOptionClick(option) {
+            if (option.isCorrect && !option.isWin) {
+                // 正确转场
+                appContainer.innerHTML = `
+                    <div class="fixed inset-0 bg-neutral-950 flex items-center justify-center p-8 text-center fade-in">
+                        <p class="text-2xl text-neutral-300 italic">"${option.reason}"</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    setState({ currentAct: option.next });
+                }, 2500);
+            } else {
+                // 错误或胜利视频
+                setState({
+                    videoConfig: { src: option.video, isWin: option.isWin || false, reason: option.reason },
+                    gameState: 'video',
+                    videoLoading: true
+                });
+            }
+        }
+
+        function renderEndScreen() {
+            const { isWin, reason } = state.videoConfig;
+            appContainer.innerHTML = `
+                <div class="max-w-2xl w-full bg-neutral-900 p-10 rounded-lg border text-center shadow-2xl zoom-in border-neutral-800">
+                    <div class="mb-8">
+                        ${isWin ? 
+                            `<h1 class="text-5xl font-bold text-green-500 tracking-widest drop-shadow-[0_0_10px_rgba(34,197,94,0.3)]">通关成功</h1>` : 
+                            `<div class="flex flex-col items-center gap-4">
+                                <i data-lucide="skull" class="w-16 h-16 text-red-600 animate-bounce"></i>
+                                <h1 class="text-5xl font-bold text-red-600 tracking-widest">游戏结束</h1>
+                            </div>`
+                        }
+                    </div>
+                    <div class="bg-neutral-950 p-6 rounded border border-neutral-800 mb-10 text-left">
+                        <h3 class="text-sm text-neutral-500 mb-2">${isWin ? "生存报告：" : "死亡判定："}</h3>
+                        <p class="text-xl text-neutral-200 leading-relaxed">${reason}</p>
+                    </div>
+                    <div class="flex gap-4 justify-center">
+                        <button id="restartBtn" class="px-8 py-3 bg-red-900 hover:bg-red-800 text-white font-bold rounded transition-colors text-lg">重新开始</button>
+                        <button id="exitBtn" class="px-8 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold rounded transition-colors text-lg">退出</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('restartBtn').onclick = () => {
+                setState({ gameState: 'rules', currentAct: 1, countdown: 10 });
+                startRulesCountdown();
+            };
+            document.getElementById('exitBtn').onclick = () => window.location.reload();
+        }
+
+        // 初始化
+        window.onload = render;
+    </script>
+</body>
+</html>
